@@ -2,6 +2,8 @@
 
 Game catur interaktif yang dibuat dengan HTML, CSS, dan JavaScript murni (Vanilla JavaScript).
 
+## 🎮 [MAIN SEKARANG!](https://rzky14.github.io/game_Catur/)
+
 ![Chess Game](https://img.shields.io/badge/Game-Chess-blue)
 ![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 ![HTML5](https://img.shields.io/badge/HTML-5-orange)
