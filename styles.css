@@ -29,6 +29,41 @@ h1 {
     font-size: 2.5em;
 }
 
+.game-mode {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.game-mode label {
+    font-weight: bold;
+    color: #333;
+}
+
+.game-mode select {
+    padding: 8px 15px;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-size: 1em;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.game-mode select:hover {
+    border-color: #764ba2;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.difficulty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .game-info {
     margin-bottom: 20px;
 }
@@ -218,6 +253,21 @@ button:active {
     h1 {
         font-size: 2em;
         margin-bottom: 15px;
+    }
+
+    .game-mode {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .game-mode select {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .difficulty {
+        justify-content: center;
     }
     
     .turn-indicator {

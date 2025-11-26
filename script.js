@@ -20,6 +20,9 @@ let currentPlayer = 'white';
 let selectedSquare = null;
 let gameHistory = [];
 let capturedPieces = { white: [], black: [] };
+let gameMode = 'pvp'; // 'pvp' or 'pvb'
+let difficulty = 'medium'; // 'easy', 'medium', 'hard'
+let isProcessing = false; // Prevent multiple moves
 
 // Inisialisasi papan catur
 function initBoard() {
@@ -37,6 +40,7 @@ function initBoard() {
     selectedSquare = null;
     gameHistory = [];
     capturedPieces = { white: [], black: [] };
+    isProcessing = false;
     updateCapturedPieces();
 }
 
@@ -64,6 +68,11 @@ function renderBoard() {
 
 // Handle klik pada kotak
 function handleSquareClick(e) {
+    if (isProcessing) return;
+    
+    // Jika mode bot dan giliran hitam, tidak bisa klik
+    if (gameMode === 'pvb' && currentPlayer === 'black') return;
+
     const row = parseInt(e.target.dataset.row);
     const col = parseInt(e.target.dataset.col);
 
@@ -73,6 +82,11 @@ function handleSquareClick(e) {
             selectedSquare = null;
             clearHighlights();
             renderBoard();
+            
+            // Jika mode bot dan sekarang giliran hitam, bot bergerak
+            if (gameMode === 'pvb' && currentPlayer === 'black') {
+                setTimeout(makeBotMove, 500);
+            }
         } else if (board[row][col] && getPieceColor(board[row][col]) === currentPlayer) {
             // Pilih bidak lain
             clearHighlights();
@@ -450,12 +464,214 @@ function undoMove() {
 
     clearHighlights();
     selectedSquare = null;
+    isProcessing = false;
     renderBoard();
+}
+
+// ==================== AI BOT ====================
+
+// Evaluasi nilai bidak
+function getPieceValue(piece) {
+    const values = {
+        '♙': 10, '♟': 10,
+        '♘': 30, '♞': 30,
+        '♗': 30, '♝': 30,
+        '♖': 50, '♜': 50,
+        '♕': 90, '♛': 90,
+        '♔': 900, '♚': 900
+    };
+    return values[piece] || 0;
+}
+
+// Evaluasi posisi papan
+function evaluateBoard() {
+    let score = 0;
+    
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const piece = board[row][col];
+            if (piece) {
+                const value = getPieceValue(piece);
+                if (getPieceColor(piece) === 'black') {
+                    score += value;
+                    // Bonus posisi tengah
+                    if (row >= 3 && row <= 4 && col >= 3 && col <= 4) {
+                        score += 5;
+                    }
+                } else {
+                    score -= value;
+                    // Bonus posisi tengah
+                    if (row >= 3 && row <= 4 && col >= 3 && col <= 4) {
+                        score -= 5;
+                    }
+                }
+            }
+        }
+    }
+    
+    return score;
+}
+
+// Dapatkan semua gerakan valid untuk pemain
+function getAllValidMoves(color) {
+    const moves = [];
+    
+    for (let fromRow = 0; fromRow < 8; fromRow++) {
+        for (let fromCol = 0; fromCol < 8; fromCol++) {
+            const piece = board[fromRow][fromCol];
+            if (piece && getPieceColor(piece) === color) {
+                const validMoves = getValidMoves(fromRow, fromCol, piece);
+                validMoves.forEach(move => {
+                    moves.push({
+                        from: { row: fromRow, col: fromCol },
+                        to: { row: move.row, col: move.col },
+                        piece: piece
+                    });
+                });
+            }
+        }
+    }
+    
+    return moves;
+}
+
+// Minimax algorithm dengan alpha-beta pruning
+function minimax(depth, isMaximizing, alpha, beta) {
+    if (depth === 0) {
+        return evaluateBoard();
+    }
+    
+    const color = isMaximizing ? 'black' : 'white';
+    const moves = getAllValidMoves(color);
+    
+    if (moves.length === 0) {
+        return isMaximizing ? -10000 : 10000;
+    }
+    
+    if (isMaximizing) {
+        let maxScore = -Infinity;
+        
+        for (const move of moves) {
+            // Simpan state
+            const capturedPiece = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+            board[move.from.row][move.from.col] = '';
+            
+            const score = minimax(depth - 1, false, alpha, beta);
+            
+            // Kembalikan state
+            board[move.from.row][move.from.col] = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = capturedPiece;
+            
+            maxScore = Math.max(maxScore, score);
+            alpha = Math.max(alpha, score);
+            
+            if (beta <= alpha) break; // Alpha-beta pruning
+        }
+        
+        return maxScore;
+    } else {
+        let minScore = Infinity;
+        
+        for (const move of moves) {
+            // Simpan state
+            const capturedPiece = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+            board[move.from.row][move.from.col] = '';
+            
+            const score = minimax(depth - 1, true, alpha, beta);
+            
+            // Kembalikan state
+            board[move.from.row][move.from.col] = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = capturedPiece;
+            
+            minScore = Math.min(minScore, score);
+            beta = Math.min(beta, score);
+            
+            if (beta <= alpha) break; // Alpha-beta pruning
+        }
+        
+        return minScore;
+    }
+}
+
+// Bot membuat gerakan
+function makeBotMove() {
+    if (currentPlayer !== 'black' || isProcessing) return;
+    
+    isProcessing = true;
+    
+    const moves = getAllValidMoves('black');
+    if (moves.length === 0) {
+        isProcessing = false;
+        return;
+    }
+    
+    let bestMove = null;
+    let bestScore = -Infinity;
+    
+    // Tentukan kedalaman berdasarkan kesulitan
+    let depth = 1;
+    if (difficulty === 'easy') depth = 1;
+    else if (difficulty === 'medium') depth = 2;
+    else if (difficulty === 'hard') depth = 3;
+    
+    // Jika mudah, tambahkan sedikit random
+    if (difficulty === 'easy' && Math.random() < 0.3) {
+        bestMove = moves[Math.floor(Math.random() * moves.length)];
+    } else {
+        // Cari gerakan terbaik
+        for (const move of moves) {
+            // Simpan state
+            const capturedPiece = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = board[move.from.row][move.from.col];
+            board[move.from.row][move.from.col] = '';
+            
+            const score = minimax(depth, false, -Infinity, Infinity);
+            
+            // Kembalikan state
+            board[move.from.row][move.from.col] = board[move.to.row][move.to.col];
+            board[move.to.row][move.to.col] = capturedPiece;
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+    }
+    
+    // Lakukan gerakan terbaik
+    if (bestMove) {
+        movePiece(bestMove.from.row, bestMove.from.col, bestMove.to.row, bestMove.to.col);
+        renderBoard();
+    }
+    
+    isProcessing = false;
 }
 
 // Event listeners
 document.getElementById('resetBtn').addEventListener('click', resetGame);
 document.getElementById('undoBtn').addEventListener('click', undoMove);
+
+// Game mode selector
+document.getElementById('gameMode').addEventListener('change', (e) => {
+    gameMode = e.target.value;
+    const difficultySection = document.getElementById('difficultySection');
+    
+    if (gameMode === 'pvb') {
+        difficultySection.style.display = 'flex';
+    } else {
+        difficultySection.style.display = 'none';
+    }
+    
+    resetGame();
+});
+
+// Difficulty selector
+document.getElementById('difficulty').addEventListener('change', (e) => {
+    difficulty = e.target.value;
+    resetGame();
+});
 
 // Inisialisasi game
 initBoard();

@@ -10,6 +10,22 @@
     <div class="container">
         <h1>♔ Game Catur ♚</h1>
         
+        <div class="game-mode">
+            <label for="gameMode">Mode Permainan:</label>
+            <select id="gameMode">
+                <option value="pvp">Player vs Player</option>
+                <option value="pvb">Player vs Bot</option>
+            </select>
+            <div class="difficulty" id="difficultySection" style="display: none;">
+                <label for="difficulty">Tingkat Kesulitan:</label>
+                <select id="difficulty">
+                    <option value="easy">Mudah</option>
+                    <option value="medium">Sedang</option>
+                    <option value="hard">Sulit</option>
+                </select>
+            </div>
+        </div>
+
         <div class="game-info">
             <div class="turn-indicator">
                 <span id="currentTurn">Giliran: Putih</span>
