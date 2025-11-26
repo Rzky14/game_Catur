@@ -157,7 +157,23 @@ function isValidMove(fromRow, fromCol, toRow, toCol, piece) {
     if (targetPiece && getPieceColor(targetPiece) === getPieceColor(piece)) return false;
 
     const validMoves = getValidMoves(fromRow, fromCol, piece);
-    return validMoves.some(move => move.row === toRow && move.col === toCol);
+    if (!validMoves.some(move => move.row === toRow && move.col === toCol)) return false;
+
+    // Cek apakah gerakan ini akan membuat raja sendiri dalam skak
+    const color = getPieceColor(piece);
+    const capturedPiece = board[toRow][toCol];
+    
+    // Simulasi gerakan
+    board[toRow][toCol] = piece;
+    board[fromRow][fromCol] = '';
+    
+    const wouldBeInCheck = isKingInCheck(color);
+    
+    // Kembalikan state
+    board[fromRow][fromCol] = piece;
+    board[toRow][toCol] = capturedPiece;
+    
+    return !wouldBeInCheck;
 }
 
 // Dapatkan semua gerakan valid untuk bidak
@@ -364,23 +380,62 @@ function updateCapturedPieces() {
     document.getElementById('capturedBlack').textContent = capturedPieces.black.join(' ');
 }
 
-// Cek status game (check, checkmate)
+// Cek status game (check, checkmate, stalemate)
 function checkGameStatus() {
     const status = document.getElementById('status');
     const kingInCheck = isKingInCheck(currentPlayer);
+    const hasValidMoves = playerHasValidMoves(currentPlayer);
 
     if (kingInCheck) {
-        if (isCheckmate(currentPlayer)) {
-            status.textContent = `Skakmat! ${currentPlayer === 'white' ? 'Hitam' : 'Putih'} Menang!`;
+        if (!hasValidMoves) {
+            // Skakmat - lawan menang
+            const winner = currentPlayer === 'white' ? 'Hitam' : 'Putih';
+            status.textContent = `🏆 SKAKMAT! ${winner} Menang!`;
             status.className = 'status checkmate';
+            disableBoard();
         } else {
-            status.textContent = 'Skak!';
+            // Skak - raja terancam tapi masih bisa bergerak
+            status.textContent = '⚠️ SKAK!';
             status.className = 'status check';
         }
     } else {
-        status.textContent = '';
-        status.className = 'status';
+        if (!hasValidMoves) {
+            // Stalemate - tidak ada gerakan valid tapi raja tidak dalam skak
+            status.textContent = '🤝 STALEMATE! Permainan Seri!';
+            status.className = 'status checkmate';
+            disableBoard();
+        } else {
+            status.textContent = '';
+            status.className = 'status';
+        }
     }
+}
+
+// Cek apakah pemain punya gerakan valid
+function playerHasValidMoves(color) {
+    for (let fromRow = 0; fromRow < 8; fromRow++) {
+        for (let fromCol = 0; fromCol < 8; fromCol++) {
+            const piece = board[fromRow][fromCol];
+            if (piece && getPieceColor(piece) === color) {
+                for (let toRow = 0; toRow < 8; toRow++) {
+                    for (let toCol = 0; toCol < 8; toCol++) {
+                        if (isValidMove(fromRow, fromCol, toRow, toCol, piece)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Nonaktifkan papan saat game berakhir
+function disableBoard() {
+    isProcessing = true;
+    document.querySelectorAll('.square').forEach(square => {
+        square.style.cursor = 'not-allowed';
+    });
 }
 
 // Cek apakah raja dalam skak
@@ -397,7 +452,11 @@ function isKingInCheck(color) {
                 break;
             }
         }
+        if (kingRow !== undefined) break;
     }
+
+    // Jika raja tidak ditemukan (tidak seharusnya terjadi)
+    if (kingRow === undefined) return false;
 
     // Cek apakah ada bidak lawan yang bisa menyerang raja
     const opponentColor = color === 'white' ? 'black' : 'white';
@@ -416,42 +475,14 @@ function isKingInCheck(color) {
     return false;
 }
 
-// Cek checkmate
-function isCheckmate(color) {
-    // Coba semua gerakan yang mungkin
-    for (let fromRow = 0; fromRow < 8; fromRow++) {
-        for (let fromCol = 0; fromCol < 8; fromCol++) {
-            const piece = board[fromRow][fromCol];
-            if (piece && getPieceColor(piece) === color) {
-                const moves = getValidMoves(fromRow, fromCol, piece);
-                for (const move of moves) {
-                    // Simulasi gerakan
-                    const originalPiece = board[move.row][move.col];
-                    board[move.row][move.col] = piece;
-                    board[fromRow][fromCol] = '';
-
-                    const stillInCheck = isKingInCheck(color);
-
-                    // Kembalikan
-                    board[fromRow][fromCol] = piece;
-                    board[move.row][move.col] = originalPiece;
-
-                    if (!stillInCheck) {
-                        return false;
-                    }
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
 // Reset game
 function resetGame() {
     initBoard();
     renderBoard();
     document.getElementById('status').textContent = '';
+    document.querySelectorAll('.square').forEach(square => {
+        square.style.cursor = 'pointer';
+    });
 }
 
 // Undo gerakan terakhir
@@ -467,6 +498,11 @@ function undoMove() {
     selectedSquare = null;
     isProcessing = false;
     renderBoard();
+    
+    // Re-enable board jika sebelumnya disabled
+    document.querySelectorAll('.square').forEach(square => {
+        square.style.cursor = 'pointer';
+    });
 }
 
 // ==================== AI BOT ====================
