@@ -53,6 +53,7 @@ function renderBoard() {
         for (let col = 0; col < 8; col++) {
             const square = document.createElement('div');
             square.className = 'square';
+            // Perbaikan: Kotak terang dimulai dari (0,0) dan bergantian
             square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
             square.dataset.row = row;
             square.dataset.col = col;

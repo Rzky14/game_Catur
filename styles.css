@@ -130,6 +130,7 @@ h1 {
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
+    position: relative;
 }
 
 .square.light {
