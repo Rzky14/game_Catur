@@ -204,21 +204,217 @@ button:active {
     }
 }
 
-@media (max-width: 600px) {
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 20px 15px;
+        max-width: 100%;
+    }
+
     h1 {
-        font-size: 1.8em;
+        font-size: 2em;
+        margin-bottom: 15px;
+    }
+    
+    .turn-indicator {
+        font-size: 1.1em;
+        padding: 8px;
+    }
+
+    .captured-pieces {
+        flex-direction: column;
+        gap: 8px;
+        font-size: 0.85em;
+    }
+
+    .captured-white, .captured-black {
+        padding: 8px;
+    }
+
+    #capturedWhite, #capturedBlack {
+        font-size: 1.3em;
+        min-height: 25px;
+    }
+
+    #chessboard {
+        max-width: 100%;
+        width: 100%;
+        border: 3px solid #333;
     }
     
     .square {
-        font-size: 2em;
+        font-size: 2.5em;
+    }
+
+    .square.valid-move::after {
+        width: 15px;
+        height: 15px;
     }
     
-    .captured-pieces {
+    .controls {
         flex-direction: column;
+        gap: 8px;
+        margin-top: 15px;
     }
     
     button {
-        padding: 10px 20px;
+        width: 100%;
+        padding: 12px 20px;
         font-size: 1em;
+    }
+
+    .status {
+        font-size: 1.1em;
+        margin-top: 15px;
+    }
+
+    .status.checkmate {
+        font-size: 1.3em;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.6em;
+        margin-bottom: 12px;
+    }
+
+    .turn-indicator {
+        font-size: 1em;
+        padding: 6px;
+    }
+
+    .captured-pieces {
+        font-size: 0.8em;
+    }
+
+    #capturedWhite, #capturedBlack {
+        font-size: 1.2em;
+        min-height: 20px;
+    }
+
+    .square {
+        font-size: 2em;
+    }
+
+    .square.valid-move::after {
+        width: 12px;
+        height: 12px;
+    }
+
+    button {
+        padding: 10px 15px;
+        font-size: 0.95em;
+    }
+
+    .status {
+        font-size: 1em;
+    }
+
+    .status.checkmate {
+        font-size: 1.2em;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        padding: 15px 10px;
+    }
+
+    h1 {
+        font-size: 1.4em;
+    }
+
+    .square {
+        font-size: 1.7em;
+    }
+
+    .turn-indicator {
+        font-size: 0.9em;
+    }
+
+    .captured-pieces {
+        font-size: 0.75em;
+    }
+
+    #capturedWhite, #capturedBlack {
+        font-size: 1.1em;
+    }
+
+    button {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+}
+
+/* Landscape mode untuk mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        padding: 5px;
+    }
+
+    .container {
+        padding: 10px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 15px;
+        max-width: 100%;
+    }
+
+    h1 {
+        grid-column: 1 / -1;
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .game-info {
+        order: 2;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 200px;
+    }
+
+    #chessboard {
+        order: 1;
+        max-width: 400px;
+        margin: 0;
+    }
+
+    .square {
+        font-size: 2em;
+    }
+
+    .controls {
+        grid-column: 1 / -1;
+        order: 3;
+        flex-direction: row;
+        margin-top: 5px;
+    }
+
+    .status {
+        grid-column: 1 / -1;
+        order: 4;
+        margin-top: 5px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        max-width: 700px;
+    }
+
+    #chessboard {
+        max-width: 600px;
+    }
+
+    .square {
+        font-size: 3.5em;
     }
 }
